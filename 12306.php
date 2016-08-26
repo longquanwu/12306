@@ -15,7 +15,7 @@ class train{
     private $to_station_name;  //目的地
     private $to_station_code;  //目的地对应的代码
     private $query_date;  //查询日期
-    private $query_num = 0;  //统计查询次数
+    private $query_num = 1;  //统计查询次数
     private $train_list = [];  //查询车次
     private $ticket_list = [];  //车站信息
     private $mail;  //邮箱地址
@@ -145,7 +145,11 @@ class train{
                     if (is_numeric($train[$ticket]) && $train[$ticket] > 0)
                         $this->ticket_flag = true;
                 }
-                $msg = $row . "\n";
+                if (empty($msg)){
+                    $msg = $row . "\n";
+                } else {
+                    $msg .= $row . "\n";
+                }
                 unset($row);
             }
         }
