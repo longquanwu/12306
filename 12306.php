@@ -134,7 +134,7 @@ class train{
      * @param array $trains
      */
     private function analyzeData(array $trains){
-        $this->msg('查询次数: ' . $this->query_num++ . "\t" . $this->query_date . $this->from_station_name . '(' . $this->from_station_code . ')' . '==>' . $this->to_station_name . '(' . $this->to_station_code . ")\n");
+        $this->msg('查询次数: ' . $this->query_num++ . "\t" . $this->query_date . "\t" . $this->from_station_name . '(' . $this->from_station_code . ')' . ' ==> ' . $this->to_station_name . '(' . $this->to_station_code . ")\n");
         foreach ($trains as $key => $train){
             if (in_array($train['station_train_code'], $this->train_list)){
                 foreach ($this->ticket_list as $ticket) {
@@ -145,9 +145,9 @@ class train{
                     if (is_numeric($train[$ticket]) && $train[$ticket] > 0)
                         $this->ticket_flag = true;
                 }
+                $msg = $row . "\n";
+                unset($row);
             }
-            $msg = $row . "\n";
-            unset($row);
         }
         $this->msg($msg);
         if ($this->ticket_flag){
