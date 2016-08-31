@@ -16,6 +16,7 @@ class train{
     private $to_station_code;  //目的地对应的代码
     private $query_date;  //查询日期
     private $query_num = 1;  //统计查询次数
+    private $query_try_num;  //查询尝试次数
     private $train_list = [];  //查询车次
     private $ticket_list = [];  //车站信息
     private $mail;  //邮箱地址
@@ -48,9 +49,9 @@ class train{
         $this->conf = require_once('./config.php');
         $this->stations = $this->formatStationInfo($this->conf['stationInfo']);
         
-        $args = getopt('f:t:d:m:n:e:');
+        $args = getopt('f:t:d:m:n:r:e:');
         if (empty($args['f']) || empty($args['t']) || empty($args['d']) || empty($args['m']) || empty($args['n']))
-            $this->error("请输入参数:\n -f 出发地\n -t 目的地\n -d 出发时间\n -m 车次(多个请用,隔开)\n -n 车座(多个请用,隔开)\n -e 邮箱(有票邮件通知,可不填) \n 如:  php 12306.php -f 北京 -t 井冈山 -d 2016-09-30 -m z133 -n 软卧,硬卧");
+            $this->error("请输入参数:\n -f 出发地\n -t 目的地\n -d 出发时间\n -m 车次(多个请用,隔开)\n -n 车座(多个请用,隔开)\n -r 查询尝试次数(可不填)\n -e 邮箱(有票邮件通知,可不填) \n 如:  php 12306.php -f 北京 -t 井冈山 -d 2016-09-30 -m z133 -n 软卧,硬卧 -r 3");
         $this->checkStation($args['f']);
         $this->checkStation($args['t']);
         $this->from_station_name = $args['f'];
@@ -58,7 +59,8 @@ class train{
         $this->to_station_name = $args['t'];
         $this->to_station_code = $this->stations[$this->to_station_name];
         $this->query_date = $args['d'];
-        $trainArr = explode(',', $args['m']);
+        isset($args['r']) && $this->query_try_num = $args['r'];
+	$trainArr = explode(',', $args['m']);
         foreach ($trainArr as $train){
             $this->train_list[] = strtoupper($train);
         }
@@ -121,7 +123,11 @@ class train{
                 print_r($result['messages']);
             } else if ($result['status']) {
                 if ($result['data']['flag']){
-                    $this->analyzeData($result['data']['datas']);
+		    if (!isset($this->query_try_num) || (isset($this->query_try_num) && $this->query_num <= $this->query_try_num)){
+                        $this->analyzeData($result['data']['datas']);
+		    } else {
+			exit;
+		    }
                 } else {
                     $this->error($result['data']['message']);
                 }
