@@ -4,8 +4,8 @@
  * User: wlq314@qq.com
  * Date: 16/8/26 Time: 09:43
  */
-require_once './Tool/Email.php';
-require_once './Tool/Http.php';
+require_once dirname(__FILE__).'/Tool/Email.php';
+require_once dirname(__FILE__).'/Tool/Http.php';
 
 class train{
 
@@ -46,7 +46,7 @@ class train{
      * 检测并初始化参数
      */
     private function init(){
-        $this->conf = require_once('./config.php');
+        $this->conf = require_once(dirname(__FILE__).'/config.php');
         $this->stations = $this->formatStationInfo($this->conf['stationInfo']);
         
         $args = getopt('f:t:d:m:n:r:e:');
