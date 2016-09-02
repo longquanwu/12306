@@ -141,6 +141,7 @@ class train{
      */
     private function analyzeData(array $trains){
         $this->msg('查询次数: ' . $this->query_num++ . "\t" . $this->query_date . "\t" . $this->from_station_name . '(' . $this->from_station_code . ')' . ' ==> ' . $this->to_station_name . '(' . $this->to_station_code . ")\n");
+        $msg = "";
         foreach ($trains as $key => $train){
             if (in_array($train['station_train_code'], $this->train_list)){
                 foreach ($this->ticket_list as $ticket) {
@@ -158,6 +159,10 @@ class train{
                 }
                 unset($row);
             }
+        }
+
+        if (empty($msg)){
+            $msg .= "无符合条件的数据!\n";
         }
         $this->msg($msg);
         if ($this->ticket_flag){
