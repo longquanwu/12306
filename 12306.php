@@ -176,7 +176,7 @@ class train{
                         $row = $train['station_train_code'] . "\t";
                     }
                     $row .= array_search($ticket, $this->ticket_type) . ':' . $train[$ticket] . "\t";
-                    if ($train[$ticket] !== '--')
+                    if ($train[$ticket] !== '--' && $train[$ticket] !== '无')
                         $this->ticket_flag = true;
                 }
                 if (empty($msg)){
