@@ -111,28 +111,61 @@ class train{
      */
     private function query(){
         $params = [
+            'leftTicketDTO.train_date' => $this->query_date,
+            'leftTicketDTO.from_station' => $this->from_station_code,
+            'leftTicketDTO.to_station' => $this->to_station_code,
             'purpose_codes' => 'ADULT',
-            'queryDate' => $this->query_date,
-            'from_station' => $this->from_station_code,
-            'to_station' =>  $this->to_station_code,
         ];
         $url = $this->conf['queryApi'] . http_build_query($params);
         while (true) {
-            $result = json_decode(Http::get($url), true);
+            $UA = [
+                'Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9) Gecko/2008052906 Firefox/3.0', 
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36',
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:50.0) Gecko/20100101 Firefox/50.0',
+            ];
+            $header = $this->randIP();
+            $header['User-Agent'] = $UA[array_rand($UA, 1)]; 
+            $header['Referer'] = 'https://kyfw.12306.cn';
+            $result = json_decode(Http::get($url, $header), true);
             if ($result['messages']) {
                 print_r($result['messages']);
             } else if ($result['status']) {
-                if ($result['data']['flag']){
-		    if (!isset($this->query_try_num) || (isset($this->query_try_num) && $this->query_num <= $this->query_try_num)){
-                        $this->analyzeData($result['data']['datas']);
-		    } else {
-			exit;
-		    }
+                if ($result['data']){
+		          if (!isset($this->query_try_num) || (isset($this->query_try_num) && $this->query_num <= $this->query_try_num)){
+                    $this->analyzeData($result['data']);
+		          } else {
+			        exit;
+		          }
                 } else {
-                    $this->error($result['data']['message']);
+                    $this->error('未查询到有效车次');
                 }
+            } else {
+                $this->msg('请求未响应,正在重试 ￣へ￣');
             }
         }
+    }
+
+    /**
+     * 此函数提供了国内的IP地址
+     */
+    private function randIP(){
+        $ip_long = array(
+            array('607649792', '608174079'), //36.56.0.0-36.63.255.255
+            array('1038614528', '1039007743'), //61.232.0.0-61.237.255.255
+            array('1783627776', '1784676351'), //106.80.0.0-106.95.255.255
+            array('2035023872', '2035154943'), //121.76.0.0-121.77.255.255
+            array('2078801920', '2079064063'), //123.232.0.0-123.235.255.255
+            array('-1950089216', '-1948778497'), //139.196.0.0-139.215.255.255
+            array('-1425539072', '-1425014785'), //171.8.0.0-171.15.255.255
+            array('-1236271104', '-1235419137'), //182.80.0.0-182.92.255.255
+            array('-770113536', '-768606209'), //210.25.0.0-210.47.255.255
+            array('-569376768', '-564133889'), //222.16.0.0-222.95.255.255
+        );
+        $rand_key = mt_rand(0, 9);
+        $ip= long2ip(mt_rand($ip_long[$rand_key][0], $ip_long[$rand_key][1]));
+        $headers['CLIENT-IP'] = $ip;
+        $headers['X-FORWARDED-FOR'] = $ip;
+        return $headers;
     }
 
     /**
@@ -142,14 +175,15 @@ class train{
     private function analyzeData(array $trains){
         $this->msg('查询次数: ' . $this->query_num++ . "\t" . $this->query_date . "\t" . $this->from_station_name . '(' . $this->from_station_code . ')' . ' ==> ' . $this->to_station_name . '(' . $this->to_station_code . ")\n");
         $msg = "";
-        foreach ($trains as $key => $train){
+        foreach ($trains as $key => $item){
+            $train  = $item['queryLeftNewDTO'];
             if (in_array($train['station_train_code'], $this->train_list)){
                 foreach ($this->ticket_list as $ticket) {
                     if (empty($row)){
                         $row = $train['station_train_code'] . "\t";
                     }
                     $row .= array_search($ticket, $this->ticket_type) . ':' . $train[$ticket] . "\t";
-                    if (is_numeric($train[$ticket]) && $train[$ticket] > 0)
+                    if ($train[$ticket] !== '--' && $train[$ticket] !== '无')
                         $this->ticket_flag = true;
                 }
                 if (empty($msg)){
